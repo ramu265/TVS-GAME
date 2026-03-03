@@ -5,25 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Tambola Tickets</title>
     <style>
-        :root { --primary: #ff4757; --secondary: #2f3542; --glass: rgba(255, 255, 255, 0.9); }
+        :root { --primary: #ff4757; --secondary: #2f3542; }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f2f6; margin: 0; padding: 10px; text-align: center; }
-        
         .header { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .last-num { font-size: 40px; color: var(--primary); font-weight: bold; }
         
         .ticket-container { display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .ticket { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); max-width: 100%; overflow-x: auto; }
+        .ticket { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); }
         
-        table { border-collapse: collapse; margin: 5px auto; background: white; }
-        td { width: 40px; height: 40px; border: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 18px; cursor: pointer; position: relative; transition: 0.3s; }
+        table { border-collapse: collapse; margin: 5px auto; }
+        td { width: 45px; height: 45px; border: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 18px; cursor: pointer; position: relative; transition: 0.2s; background: white; }
         td.empty { background: #f9f9f9; cursor: default; }
         
         /* --- Marking Styles --- */
-        .marked-heart::after { content: '❤️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0.8; }
+        .marked-heart::after { content: '❤️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; pointer-events: none; }
         .marked-yellow { background-color: #fff200 !important; color: black; }
-        .is-called { border: 2px solid #2ecc71 !important; box-shadow: inset 0 0 5px #2ecc71; }
-
-        .voice-status { font-size: 12px; color: #7f8c8d; margin-top: 10px; }
+        .is-called { border: 2px solid #2ecc71 !important; }
     </style>
 </head>
 <body>
@@ -31,7 +28,6 @@
     <div class="header">
         <div style="font-size: 14px; color: #666;">Last Called Number</div>
         <div id="current-number" class="last-num">--</div>
-        <div class="voice-status">Voice Room: <b id="room-id">{{ voice_id }}</b></div>
     </div>
 
     <div id="main-ticket-area" class="ticket-container">
@@ -42,7 +38,7 @@
                 <tr>
                     {% for num in row %}
                         {% if num != 0 %}
-                            <td onclick="handleTap(this, {{ num }})" data-num="{{ num }}">
+                            <td onclick="handleTap(this)" data-num="{{ num }}">
                                 {{ num }}
                             </td>
                         {% else %}
@@ -57,53 +53,46 @@
     </div>
 
     <script>
-        const voiceId = "{{ voice_id }}";
-        let calledNumbers = [];
         let tapCount = 0;
         let tapTimer;
 
-        // --- 🔄 Fetch Updates from Server ---
-        function updateGame() {
-            fetch('/get_updates')
-            .then(res => res.json())
-            .then(data => {
-                calledNumbers = data.called;
-                if (calledNumbers.length > 0) {
-                    document.getElementById('current-number').innerText = calledNumbers[calledNumbers.length - 1];
-                }
-                highlightCalled();
-            });
-        }
-
-        // సర్వర్ లో వచ్చిన నంబర్ ని గ్రీన్ బార్డర్ తో చూపిస్తుంది
-        function highlightCalled() {
-            document.querySelectorAll('td[data-num]').forEach(td => {
-                const n = parseInt(td.getAttribute('data-num'));
-                if (calledNumbers.includes(n)) {
-                    td.classList.add('is-called');
-                }
-            });
-        }
-
-        // --- 👆 Double Tap Logic ---
-        function handleTap(element, num) {
+        // --- 👆 Marking Logic ---
+        function handleTap(element) {
             tapCount++;
             if (tapCount === 1) {
                 tapTimer = setTimeout(() => {
-                    // Single Tap: Pink Heart
+                    // Single Click: Pink Heart ❤️
                     element.classList.toggle('marked-heart');
                     tapCount = 0;
                 }, 300);
             } else if (tapCount === 2) {
                 clearTimeout(tapTimer);
-                // Double Tap: Yellow Mark
+                // Double Click: Yellow Mark 🟨
                 element.classList.remove('marked-heart');
                 element.classList.toggle('marked-yellow');
                 tapCount = 0;
             }
         }
 
-        // ప్రతి 3 సెకన్లకు ఒకసారి కొత్త నంబర్ల కోసం చెక్ చేస్తుంది
+        // --- 🔄 Auto Update Called Numbers ---
+        function updateGame() {
+            fetch('/get_updates')
+            .then(res => res.json())
+            .then(data => {
+                if (data.called.length > 0) {
+                    const lastNum = data.called[data.called.length - 1];
+                    document.getElementById('current-number').innerText = lastNum;
+                    
+                    // కాల్ చేసిన నంబర్ ని గ్రీన్ కలర్ తో చూపిస్తుంది
+                    document.querySelectorAll('td[data-num]').forEach(td => {
+                        if (parseInt(td.getAttribute('data-num')) === lastNum) {
+                            td.classList.add('is-called');
+                        }
+                    });
+                }
+            });
+        }
+
         setInterval(updateGame, 3000);
         updateGame();
     </script>
