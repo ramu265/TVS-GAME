@@ -8,88 +8,38 @@
     <style>
         :root { 
             --primary: #ff4757; 
-            --admin-call: #fff200; /* Yellow */
-            --user-blue: #3498db;  /* Blue */
-            --glass: rgba(255, 255, 255, 0.1);
+            --admin-call: #fff200; 
+            --user-blue: #3498db; 
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #1e272e; margin: 0; padding: 0; color: white; }
         
-        /* 📌 STICKY HEADER */
-        .sticky-header {
-            position: fixed; top: 0; width: 100%; background: #2d3436;
-            z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border-bottom: 4px solid var(--primary);
-        }
+        .sticky-header { position: fixed; top: 0; width: 100%; background: #2d3436; z-index: 1000; border-bottom: 4px solid var(--primary); }
+        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; max-width: 1000px; margin: 0 auto; }
+        .h-dot { display: inline-block; background: var(--primary); color: white; width: 30px; height: 30px; border-radius: 50%; line-height: 30px; margin: 2px; font-weight: bold; font-size: 13px; }
 
-        .header-content {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 15px; max-width: 1000px; margin: 0 auto;
-        }
-
-        .recent-box { flex: 1; text-align: center; }
-        .h-dot { 
-            display: inline-block; background: var(--primary); color: white; 
-            width: 32px; height: 32px; border-radius: 50%; 
-            line-height: 32px; margin: 3px; font-weight: bold; font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        /* 🎙️ MIC CONTROLS */
-        .audio-controls { display: flex; gap: 8px; align-items: center; }
-        .btn-audio {
-            background: #6c5ce7; color: white; border: none; padding: 8px 15px;
-            border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.3s;
-        }
-
-        /* 🎟️ TICKET SECTION */
         .ticket-container { margin-top: 140px; padding: 15px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .ticket-wrapper { 
-            background: white; padding: 10px; border-radius: 12px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4); border-top: 6px solid var(--primary); 
-            max-width: 480px; width: 95%;
-        }
+        .ticket-wrapper { background: white; padding: 10px; border-radius: 12px; max-width: 500px; width: 95%; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border-top: 6px solid var(--primary); }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+        table { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
         td { 
-            height: 48px; border-radius: 8px; font-weight: bold; font-size: 20px; 
+            height: 45px; border-radius: 4px; font-weight: bold; font-size: 18px; 
             position: relative; cursor: pointer; user-select: none;
-            background: #f1f2f6; color: #2d3436; transition: all 0.2s ease;
+            background: #f1f2f6; color: #2d3436; 
         }
 
-        /* ✨ MARKING STYLES (Number will stay visible) ✨ */
+        .is-called { background-color: var(--admin-call) !important; }
+        .marked-blue { background-color: var(--user-blue) !important; color: white !important; }
         
-        /* 1. Admin Called: Auto Yellow Background */
-        .is-called { 
-            background-color: var(--admin-call) !important; 
-            color: #2d3436 !important;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-        }
-
-        /* 2. User Manual Click: Blue Background */
-        .marked-blue { 
-            background-color: var(--user-blue) !important; 
-            color: white !important; 
-        }
-
-        /* 3. Heart Marking (Overlay) */
         .marked-heart::after {
             content: '❤️'; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); font-size: 30px; 
-            opacity: 0.8; pointer-events: none;
-            animation: heartPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translate(-50%, -50%); font-size: 24px; opacity: 0.8;
         }
 
-        @keyframes heartPop {
-            0% { transform: translate(-50%, -50%) scale(0); }
-            100% { transform: translate(-50%, -50%) scale(1); }
-        }
-
-        .empty { background: #dfe4ea; color: #dfe4ea; cursor: default; }
+        .empty { background: #dfe4ea !important; }
 
         @media (max-width: 450px) {
-            .header-content { flex-direction: column; gap: 10px; }
             .ticket-container { margin-top: 180px; }
-            td { height: 42px; font-size: 17px; }
+            td { height: 38px; font-size: 16px; }
         }
     </style>
 </head>
@@ -97,72 +47,69 @@
 
     <div class="sticky-header">
         <div class="header-content">
-            <div class="recent-box">
-                <p style="margin: 0 0 5px 0; font-size: 12px; color: #ccc;">Recent Numbers:</p>
-                <div id="live-h"></div>
-            </div>
-
-            <div class="audio-controls">
-                <button id="voice-toggle" class="btn-audio" onclick="toggleUserAudio()">🎙️ Join Voice</button>
-                <button id="mute-btn" class="btn-audio" onclick="toggleMute()" style="display:none; background:#ff4757;">🔇 Mute</button>
-                <audio id="remote-audio" autoplay></audio>
-            </div>
+            <div id="live-h"></div>
+            <button id="voice-toggle" class="h-dot" style="width:auto; border-radius:20px; padding:0 15px;" onclick="toggleUserAudio()">🎙️ Join</button>
+            <audio id="remote-audio" autoplay></audio>
         </div>
     </div>
 
-    <div id="main-ticket-area" class="ticket-container">
-        </div>
+    <div id="main-ticket-area" class="ticket-container"></div>
 
     <script>
-        let userPeer, isConnected = false;
-        const ADMIN_VOICE_ID = "{{ voice_id }}"; 
         let adminCalledNumbers = [];
         let tapCount = 0;
         let tapTimer;
 
-        // --- 🎲 1-90 NUMBERS LOGIC (6 Tickets) ---
-        function generateAllTickets() {
+        // --- 🎲 హౌసీ స్టాండర్డ్ టిక్కెట్ జనరేటర్ ---
+        function generateHousieTickets() {
             let allNumbers = Array.from({length: 90}, (_, i) => i + 1);
-            allNumbers.sort(() => Math.random() - 0.5); // Shuffle
+            allNumbers.sort(() => Math.random() - 0.5);
 
             const container = document.getElementById('main-ticket-area');
             container.innerHTML = '';
 
             for (let t = 0; t < 6; t++) {
-                let ticketNumbers = allNumbers.slice(t * 15, (t + 1) * 15).sort((a,b) => a-b);
+                let ticketNums = allNumbers.slice(t * 15, (t + 1) * 15);
+                let grid = Array(3).fill().map(() => Array(9).fill(0));
                 
+                // నంబర్లను సరైన కాలమ్స్‌లో ఉంచడం
+                ticketNums.forEach(n => {
+                    let col = n === 90 ? 8 : Math.floor(n / 10);
+                    let row = Math.floor(Math.random() * 3);
+                    while(grid[row][col] !== 0) row = (row + 1) % 3;
+                    grid[row][col] = n;
+                });
+
                 let wrapper = document.createElement('div');
                 wrapper.className = 'ticket-wrapper';
-                wrapper.innerHTML = `<h3 style="margin:0 0 10px 0; color:#2d3436; font-size:14px;">Ticket #${t+1}</h3>`;
+                wrapper.innerHTML = `<h3 style="color:#2d3436; margin:5px; font-size:14px;">Ticket #${t+1}</h3>`;
 
                 let table = document.createElement('table');
-                for (let r = 0; r < 3; r++) {
+                grid.forEach(row => {
                     let tr = document.createElement('tr');
-                    let rowNums = ticketNumbers.slice(r * 5, (r + 1) * 5);
-                    rowNums.forEach(num => {
+                    row.forEach(val => {
                         let td = document.createElement('td');
-                        td.innerText = num;
-                        td.setAttribute('data-num', num);
-                        td.onclick = function() { handleTap(this); };
+                        if (val !== 0) {
+                            td.innerText = val;
+                            td.setAttribute('data-num', val);
+                            td.onclick = function() { handleTap(this); };
+                        } else {
+                            td.className = 'empty';
+                        }
                         tr.appendChild(td);
                     });
-                    // Adding empty cells to make it 9 columns if needed, 
-                    // but as per your request, 5 numbers per row fixed.
                     table.appendChild(tr);
-                }
+                });
                 wrapper.appendChild(table);
                 container.appendChild(wrapper);
             }
         }
 
-        // --- 👆 MARKING LOGIC (Double Click for Heart) ---
         function handleTap(element) {
             const num = parseInt(element.getAttribute('data-num'));
             tapCount++;
-
             if (tapCount === 1) {
                 tapTimer = setTimeout(() => {
-                    // Single Click Logic
                     if (adminCalledNumbers.includes(num)) {
                         element.classList.toggle('marked-heart');
                     } else {
@@ -170,77 +117,34 @@
                     }
                     tapCount = 0;
                 }, 250);
-            } else if (tapCount === 2) {
+            } else {
                 clearTimeout(tapTimer);
-                // Double Click: Always Toggle Heart
                 element.classList.toggle('marked-heart');
                 tapCount = 0;
             }
         }
 
-        // --- 🔄 SYNC & AUTO-HIGHLIGHT ---
         function fetchUpdates() {
             fetch('/get_updates').then(res => res.json()).then(data => {
                 if(data.called) {
                     adminCalledNumbers = data.called;
-                    
-                    // 1. Update History Dots
                     let html = "";
-                    adminCalledNumbers.slice().reverse().slice(0, 8).forEach(n => {
+                    data.called.slice().reverse().slice(0, 8).forEach(n => {
                         html += `<span class="h-dot">${n}</span>`;
                     });
                     document.getElementById('live-h').innerHTML = html;
 
-                    // 2. Auto-Highlight Yellow
                     document.querySelectorAll('td[data-num]').forEach(td => {
-                        let val = parseInt(td.getAttribute('data-num'));
-                        if (adminCalledNumbers.includes(val)) {
+                        if (adminCalledNumbers.includes(parseInt(td.getAttribute('data-num')))) {
                             td.classList.add('is-called');
-                            td.classList.remove('marked-blue');
                         }
                     });
                 }
             });
         }
 
-        // --- 🎤 AUDIO LOGIC (PeerJS) ---
-        function toggleUserAudio() {
-            const btn = document.getElementById('voice-toggle');
-            const muteBtn = document.getElementById('mute-btn');
-            const audioBox = document.getElementById('remote-audio');
-
-            if (!isConnected) {
-                userPeer = new Peer();
-                userPeer.on('open', () => {
-                    const call = userPeer.call(ADMIN_VOICE_ID, null);
-                    call.on('stream', stream => {
-                        audioBox.srcObject = stream;
-                        btn.innerText = "🛑 Leave";
-                        btn.style.background = "#2d3436";
-                        muteBtn.style.display = "inline-block";
-                        isConnected = true;
-                    });
-                });
-            } else {
-                if (userPeer) userPeer.destroy();
-                isConnected = false;
-                btn.innerText = "🎙️ Join Voice";
-                btn.style.background = "#6c5ce7";
-                muteBtn.style.display = "none";
-                audioBox.srcObject = null;
-            }
-        }
-
-        function toggleMute() {
-            const audio = document.getElementById('remote-audio');
-            audio.muted = !audio.muted;
-            document.getElementById('mute-btn').innerText = audio.muted ? "🔊 Unmute" : "🔇 Mute";
-        }
-
-        // Start Game
-        generateAllTickets();
+        generateHousieTickets();
         setInterval(fetchUpdates, 3000);
-        fetchUpdates();
     </script>
 </body>
 </html>
