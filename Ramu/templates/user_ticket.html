@@ -1,139 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Tambola Ticket</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Tambola Tickets</title>
+    <style>
+        :root { --primary: #ff4757; --secondary: #2f3542; --glass: rgba(255, 255, 255, 0.9); }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1f2f6; margin: 0; padding: 10px; text-align: center; }
+        
+        .header { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .last-num { font-size: 40px; color: var(--primary); font-weight: bold; }
+        
+        .ticket-container { display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .ticket { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); max-width: 100%; overflow-x: auto; }
+        
+        table { border-collapse: collapse; margin: 5px auto; background: white; }
+        td { width: 40px; height: 40px; border: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 18px; cursor: pointer; position: relative; transition: 0.3s; }
+        td.empty { background: #f9f9f9; cursor: default; }
+        
+        /* --- Marking Styles --- */
+        .marked-heart::after { content: '❤️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0.8; }
+        .marked-yellow { background-color: #fff200 !important; color: black; }
+        .is-called { border: 2px solid #2ecc71 !important; box-shadow: inset 0 0 5px #2ecc71; }
 
-<style>
-body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding-top: 160px; }
-.header { position: fixed; top: 0; width: 100%; background: white; padding: 20px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 1000; }
-.current-label { font-size: 14px; color: #040404; font-weight: bold; text-transform: uppercase; }
-.call-num { font-size: 55px; font-weight: 900; color: #ff4757; margin: 5px 0; line-height: 1; }
-.btn-audio { padding: 10px 25px; background: #6c5ce7; color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer; }
-
-.ticket-container { display: flex; flex-direction: column; align-items: center; padding: 15px; gap: 25px; }
-.ticket { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 480px; border-top: 8px solid #ff4757; }
-.ticket-id { text-align: left; font-size: 14px; color: #999; font-weight: bold; margin-bottom: 10px; }
-
-table { width: 100%; border-collapse: separate; border-spacing: 5px; table-layout: fixed; }
-td { border: 1px solid #e0e0e0; height: 55px; text-align: center; font-weight: 800; font-size: 22px; position: relative; cursor: pointer; border-radius: 8px; }
-.empty { background: #f8f9fa; border-color: #eee; }
-
-.auto-match { background-color: #ffeb3b; color: #000; border: 2px solid #fbc02d; }
-.marked-heart { background-color: #ff4757; color: white; }
-.marked-heart::after { content: '❤️'; position: absolute; font-size: 16px; top: -10px; right: -8px; }
-.marked-normal { background-color: #3498db; color: white; }
-</style>
+        .voice-status { font-size: 12px; color: #7f8c8d; margin-top: 10px; }
+    </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="current-label">Last Number</div>
-    <div class="call-num" id="last-num">--</div>
-</div>
+    <div class="header">
+        <div style="font-size: 14px; color: #666;">Last Called Number</div>
+        <div id="current-number" class="last-num">--</div>
+        <div class="voice-status">Voice Room: <b id="room-id">{{ voice_id }}</b></div>
+    </div>
 
-<div class="ticket-container" id="ticketContainer"></div>
+    <div id="main-ticket-area" class="ticket-container">
+        {% for ticket in tickets %}
+        <div class="ticket">
+            <table>
+                {% for row in ticket %}
+                <tr>
+                    {% for num in row %}
+                        {% if num != 0 %}
+                            <td onclick="handleTap(this, {{ num }})" data-num="{{ num }}">
+                                {{ num }}
+                            </td>
+                        {% else %}
+                            <td class="empty"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endfor %}
+    </div>
 
-<script>
+    <script>
+        const voiceId = "{{ voice_id }}";
+        let calledNumbers = [];
+        let tapCount = 0;
+        let tapTimer;
 
-function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-function generateTickets() {
-
-    const container = document.getElementById("ticketContainer");
-    container.innerHTML = "";
-
-    // Step 1: create 1–90 unique numbers
-    let allNumbers = shuffle(Array.from({length:90}, (_,i)=>i+1));
-
-    // Step 2: split into 6 tickets (15 each)
-    let ticketsNumbers = [];
-    for(let i=0;i<6;i++){
-        ticketsNumbers.push(allNumbers.slice(i*15,(i+1)*15));
-    }
-
-    // Step 3: build ticket structure
-    let tickets = [];
-
-    for(let t=0;t<6;t++){
-
-        let ticket = Array.from({length:3},()=>Array(9).fill(""));
-
-        let nums = ticketsNumbers[t].sort((a,b)=>a-b);
-
-        nums.forEach(num=>{
-
-            let col = Math.floor(num/10);
-            if(num===90) col=8;
-
-            // find row with <5 numbers
-            let possibleRows = [];
-            for(let r=0;r<3;r++){
-                let count = ticket[r].filter(x=>x!=="").length;
-                if(count<5 && ticket[r][col]===""){
-                    possibleRows.push(r);
+        // --- 🔄 Fetch Updates from Server ---
+        function updateGame() {
+            fetch('/get_updates')
+            .then(res => res.json())
+            .then(data => {
+                calledNumbers = data.called;
+                if (calledNumbers.length > 0) {
+                    document.getElementById('current-number').innerText = calledNumbers[calledNumbers.length - 1];
                 }
-            }
-
-            if(possibleRows.length>0){
-                let row = possibleRows[Math.floor(Math.random()*possibleRows.length)];
-                ticket[row][col]=num;
-            }
-        });
-
-        tickets.push(ticket);
-    }
-
-    // Step 4: render tickets
-    tickets.forEach((ticket,index)=>{
-
-        let ticketDiv=document.createElement("div");
-        ticketDiv.className="ticket";
-
-        let title=document.createElement("div");
-        title.className="ticket-id";
-        title.innerText="TICKET #"+(index+1);
-        ticketDiv.appendChild(title);
-
-        let table=document.createElement("table");
-
-        ticket.forEach(row=>{
-            let tr=document.createElement("tr");
-
-            row.forEach(val=>{
-                let td=document.createElement("td");
-
-                if(val===""){
-                    td.className="empty";
-                } else {
-                    td.className="cell";
-                    td.setAttribute("data-num",val);
-                    td.innerText=val;
-                    td.onclick=()=>handleInteraction(td);
-                }
-
-                tr.appendChild(td);
+                highlightCalled();
             });
+        }
 
-            table.appendChild(tr);
-        });
+        // సర్వర్ లో వచ్చిన నంబర్ ని గ్రీన్ బార్డర్ తో చూపిస్తుంది
+        function highlightCalled() {
+            document.querySelectorAll('td[data-num]').forEach(td => {
+                const n = parseInt(td.getAttribute('data-num'));
+                if (calledNumbers.includes(n)) {
+                    td.classList.add('is-called');
+                }
+            });
+        }
 
-        ticketDiv.appendChild(table);
-        container.appendChild(ticketDiv);
-    });
+        // --- 👆 Double Tap Logic ---
+        function handleTap(element, num) {
+            tapCount++;
+            if (tapCount === 1) {
+                tapTimer = setTimeout(() => {
+                    // Single Tap: Pink Heart
+                    element.classList.toggle('marked-heart');
+                    tapCount = 0;
+                }, 300);
+            } else if (tapCount === 2) {
+                clearTimeout(tapTimer);
+                // Double Tap: Yellow Mark
+                element.classList.remove('marked-heart');
+                element.classList.toggle('marked-yellow');
+                tapCount = 0;
+            }
+        }
 
-    console.log("✔ No Repeat Numbers");
-}
-
-generateTickets();
-
-</script>
+        // ప్రతి 3 సెకన్లకు ఒకసారి కొత్త నంబర్ల కోసం చెక్ చేస్తుంది
+        setInterval(updateGame, 3000);
+        updateGame();
+    </script>
 </body>
 </html>
