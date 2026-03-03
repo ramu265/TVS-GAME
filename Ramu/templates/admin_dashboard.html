@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tambola Master Console</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        /* Base Styles */
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f4; color: #333; margin: 0; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-top: 20px; display: inline-block; width: 100%; max-width: 600px; }
+        .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; margin: 20px auto; background: #fff; padding: 10px; border-radius: 8px; }
+        .num { border: 1px solid #ddd; padding: 10px; border-radius: 4px; color: #ccc; font-weight: bold; font-size: 14px; }
+        .called { background: #ff4757 !important; color: white !important; border-color: #ff4757; transform: scale(1.05); }
+        .display-num { font-size: 80px; color: #2f3542; margin: 10px; font-weight: bold; }
+        
+        /* 🎙️ Mic Control Area */
+        .mic-box { background: #eff2f7; border: 2px dashed #6c5ce7; padding: 15px; border-radius: 10px; margin-top: 15px; }
+        .mic-status { font-size: 13px; font-weight: bold; margin-bottom: 10px; color: #666; }
+        .live-dot { height: 10px; width: 10px; background-color: #ff4757; border-radius: 50%; display: inline-block; margin-right: 5px; visibility: hidden; }
+        .is-live .live-dot { visibility: visible; animation: blink 1s infinite; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+
+        /* History & Buttons */
+        .history-line { background: #fff; padding: 15px; margin: 15px auto; max-width: 600px; border-radius: 8px; border: 2px solid #ff4757; min-height: 40px; overflow-x: auto; white-space: nowrap; }
+        .h-item { display: inline-block; background: #ff4757; color: white; padding: 5px 10px; margin: 3px; border-radius: 4px; font-weight: bold; }
+        .btn { padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin: 5px; color: white; transition: 0.3s; }
+        .btn:hover { opacity: 0.8; }
+        
+        /* Input & Table */
+        input { padding: 12px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; width: 44%; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+
+        /* 📊 Winner Tracker Box */
+        .result-box { background: #fff; padding: 15px; border-radius: 10px; border-top: 8px solid #3498db; margin-top: 10px; text-align: left; }
+        .prize-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; align-items: center; }
+        .prize-name { font-weight: bold; color: #2c3e50; width: 140px; }
+        .winner-tags { flex-grow: 1; display: flex; gap: 8px; flex-wrap: wrap; }
+        .tag { background: #e8f4fd; color: #3498db; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; border: 1px solid #b3d7f2; }
+    </style>
+</head>
+<body>
+
+    <h1>Tambola Master Console</h1>
+    
+    <div class="card">
+        <div class="display-num" id="current">--</div>
+        <button id="nextBtn" onclick="nextNum()" class="btn" style="background: #ff4757;">Next Number</button>
+        <button onclick="resetGame()" class="btn" style="background: #2f3542;">Restart Game</button>
+        
+        <div class="mic-box" id="micBox">
+            <div class="mic-status"><span class="live-dot"></span> Status: <span id="micText">Mic Off</span></div>
+            <button id="startMicBtn" onclick="toggleAdminMic()" class="btn" style="background: #6c5ce7; width: 90%;">Start Live Mic</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="result-box">
+            <h3 style="margin-top: 0; color: #3498db;">📊 Live Winner Tracker (Top 3 Each)</h3>
+            <div id="auto-results">
+                <div class="prize-row">
+                    <span class="prize-name">Jaldhi 5:</span> 
+                    <div id="auto-jaldhi" class="winner-tags"><span style="color:#ccc">Waiting...</span></div>
+                </div>
+                <div class="prize-row">
+                    <span class="prize-name">Top Line:</span> 
+                    <div id="auto-top" class="winner-tags"><span style="color:#ccc">Waiting...</span></div>
+                </div>
+                <div class="prize-row">
+                    <span class="prize-name">Middle Line:</span> 
+                    <div id="auto-middle" class="winner-tags"><span style="color:#ccc">Waiting...</span></div>
+                </div>
+                <div class="prize-row">
+                    <span class="prize-name">Bottom Line:</span> 
+                    <div id="auto-bottom" class="winner-tags"><span style="color:#ccc">Waiting...</span></div>
+                </div>
+                <div class="prize-row">
+                    <span class="prize-name">Full Housie:</span> 
+                    <div id="auto-full" class="winner-tags"><span style="color:#ccc">Waiting...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>Called Numbers History</h3>
+    <div class="history-line" id="history-box"></div>
+
+    <div class="card">
+        <div class="grid">
+            {% for i in range(1, 91) %}
+                <div id="num-{{i}}" class="num">{{i}}</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎟️ Generate & Send Tickets</h3>
+        <input type="text" id="phone" placeholder="WhatsApp (91...)">
+        <input type="number" id="count" placeholder="Tickets (1-6)" min="1" max="6">
+        <br>
+        <button onclick="send()" class="btn" style="background: #2ed573; width: 92%;">Send via WhatsApp</button>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top: 0; color: #2d3436;">💰 Collection Calculator</h3>
+        <input type="number" id="totalAmount" placeholder="Total Collection Amount" oninput="calculateDividends()" style="width: 90%;">
+        <table>
+            <thead>
+                <tr style="background: #f4f4f4;">
+                    <th>Prize Type</th>
+                    <th>Amount (Each)</th>
+                </tr>
+            </thead>
+            <tbody id="prizeTable">
+                <tr><td>Jaldhi 5 / Lines (Each)</td><td id="val1" style="font-weight: bold; color: #2ed573;">₹ 0</td></tr>
+                <tr><td>Full Housie</td><td id="val5" style="font-weight: bold; color: #ff4757;">₹ 0</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let peer, localStream, isMicOn = false;
+        const VOICE_ID = "{{ voice_id }}"; 
+
+        // 🎤 Voice Control (Unchanged)
+        function toggleAdminMic() {
+            const btn = document.getElementById('startMicBtn');
+            const box = document.getElementById('micBox');
+            const statusText = document.getElementById('micText');
+
+            if (!isMicOn) {
+                peer = new Peer(VOICE_ID);
+                navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                    localStream = stream;
+                    isMicOn = true;
+                    btn.innerText = "Stop Live Mic";
+                    btn.style.background = "#ff4757";
+                    statusText.innerText = "LIVE BROADCASTING...";
+                    box.classList.add('is-live');
+                    peer.on('call', call => call.answer(localStream));
+                }).catch(err => alert("Mic permission denied!"));
+            } else {
+                if(localStream) localStream.getTracks().forEach(track => track.stop());
+                if(peer) peer.destroy();
+                isMicOn = false;
+                btn.innerText = "Start Live Mic";
+                btn.style.background = "#6c5ce7";
+                statusText.innerText = "Mic Off";
+                box.classList.remove('is-live');
+            }
+        }
+
+        // 📊 Updates & Winner Sync (Modified to handle specific phone list)
+        function fetchUpdates() {
+            fetch('/get_updates').then(res => res.json()).then(data => {
+                // 🏆 Winner Sync Logic
+                if(data.winners) {
+                    const prizeKeys = ['jaldhi', 'top', 'middle', 'bottom', 'full'];
+                    prizeKeys.forEach(key => {
+                        let container = document.getElementById('auto-' + key);
+                        let winnerList = data.winners[key];
+
+                        if(Array.isArray(winnerList) && winnerList.length > 0) {
+                            container.innerHTML = winnerList.slice(0, 3).map((phone, index) => 
+                                `<span class="tag">#${index + 1} ${phone}</span>`
+                            ).join('');
+                        } else {
+                            container.innerHTML = '<span style="color:#ccc; font-size:12px;">Waiting...</span>';
+                        }
+                    });
+                }
+
+                // 🎲 Grid Sync
+                if(data.called) {
+                    data.called.forEach(num => {
+                        const el = document.getElementById('num-' + num);
+                        if(el) el.classList.add('called');
+                    });
+                    if(data.called.length > 0) {
+                        document.getElementById('current').innerText = data.called[data.called.length - 1];
+                    }
+                }
+            });
+        }
+        
+        setInterval(fetchUpdates, 3000);
+
+        function nextNum() {
+            document.getElementById('nextBtn').disabled = true;
+            fetch('/call_number', { method: 'POST' }).then(res => res.json()).then(data => {
+                document.getElementById('nextBtn').disabled = false;
+                if(data.number) {
+                    document.getElementById('current').innerText = data.number;
+                    const el = document.getElementById('num-' + data.number);
+                    if(el) el.classList.add('called');
+                    
+                    let historyBox = document.getElementById('history-box');
+                    historyBox.innerHTML = `<span class="h-item">${data.number}</span> ` + historyBox.innerHTML;
+                    
+                    fetchUpdates(); 
+                }
+            });
+        }
+
+        function send() {
+            let ph = document.getElementById('phone').value;
+            let ct = document.getElementById('count').value;
+            if(!ph || !ct) return alert("Details missing!");
+            fetch('/generate_link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `phone=${ph}&ticket_count=${ct}`
+            }).then(res => res.json()).then(data => {
+                if(data.whatsapp_url) window.open(data.whatsapp_url, '_blank');
+            });
+        }
+
+        function resetGame() { 
+            if(confirm("Reset Game? All data will be cleared!")) {
+                fetch('/restart_game', {method:'POST'}).then(() => location.reload()); 
+            }
+        }
+
+        function calculateDividends() {
+    let total = document.getElementById('totalAmount').value;
+    // .toFixed(2) వాడటం వల్ల ఫ్లోట్ వాల్యూస్ (ఉదా: 20.55) వస్తాయి
+    let val = total > 0 ? (total / 5).toFixed(2) : "0.00";
+    
+    document.getElementById('val1').innerText = "₹ " + val;
+    document.getElementById('val5').innerText = "₹ " + val;
+}
+        window.onload = fetchUpdates;
+    </script>
+</body>
+</html>

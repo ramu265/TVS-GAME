@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Housie Admin Login</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-container { background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); width: 100%; max-width: 380px; text-align: center; position: relative; }
+        h2 { color: #333; margin-bottom: 25px; }
+        
+        /* ❤️ Love/Like Counter Styles - Positioned at Top Right */
+        .admin-like-box {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: #fff0f3;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 1px solid #ffccd5;
+            z-index: 10;
+            transition: 0.3s;
+            user-select: none;
+        }
+        .admin-like-box:hover { background: #ffe0e6; }
+        .heart-icon { font-size: 20px; color: #ddd; transition: 0.3s; line-height: 1; }
+        .heart-icon.liked { color: #ff4757; }
+        .count-text { font-size: 14px; font-weight: bold; color: #ff4757; }
+
+        .input-group { text-align: left; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #666; font-size: 14px; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; box-sizing: border-box; }
+        .login-btn { width: 100%; padding: 12px; background-color: #ff4757; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .login-btn:hover { background-color: #ff3040; }
+        
+        .hint-box { background: #fff9db; border: 1px solid #ffe066; padding: 10px; border-radius: 6px; margin-bottom: 20px; font-size: 13px; color: #856404; text-align: left; }
+        .dev-btn { margin-top: 15px; background: none; border: 1px solid #ddd; color: #888; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; width: 100%; }
+        .dev-info { display: none; margin-top: 10px; font-weight: bold; color: #2f3542; background: #f1f2f6; padding: 8px; border-radius: 4px; border: 1px solid #dcdde1; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="admin-like-box" onclick="handleLike()">
+            <span id="admin-heart" class="heart-icon">❤</span>
+            <span id="admin-like-count" class="count-text">0</span>
+        </div>
+
+        <h2>Tambola Admin</h2>
+
+        <div class="hint-box">
+            <strong>Login Credentials:</strong><br>
+            Username: <b>admin</b><br>
+            Password: <b>admin123</b>
+        </div>
+
+        <form action="/login" method="POST">
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="admin" required>
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="admin123" required>
+            </div>
+            <button type="submit" class="login-btn">Login to Dashboard</button>
+        </form>
+
+        <button class="dev-btn" onclick="toggleDev()">About Developer</button>
+
+        <div id="dev-box" class="dev-info">
+            Developer: <b>Ramu Tirumareddy</b><br>
+            Grandson of Tirumareddy Jagannadham<br>
+            From: Peddararimi
+        </div>
+    </div>
+
+    <script>
+        function toggleDev() {
+            var x = document.getElementById("dev-box");
+            x.style.display = (x.style.display === "none" || x.style.display === "") ? "block" : "none";
+        }
+
+        // --- ❤️ Like Logic ---
+        const heartEl = document.getElementById('admin-heart');
+        const countEl = document.getElementById('admin-like-count');
+
+        // Local Storage నుండి డేటా తెచ్చుకోవడం
+        let currentLikes = parseInt(localStorage.getItem('adminLikes')) || 0;
+        let userLiked = localStorage.getItem('userLiked') === 'true';
+
+        // Initial Display
+        countEl.innerText = currentLikes;
+        if(userLiked) heartEl.classList.add('liked');
+
+        function handleLike() {
+            if(!userLiked) {
+                currentLikes++;
+                userLiked = true;
+                heartEl.classList.add('liked');
+            } else {
+                currentLikes--;
+                userLiked = false;
+                heartEl.classList.remove('liked');
+            }
+            
+            // సేవ్ చేయడం
+            localStorage.setItem('adminLikes', currentLikes);
+            localStorage.setItem('userLiked', userLiked);
+            countEl.innerText = currentLikes;
+        }
+    </script>
+</body>
+</html>
