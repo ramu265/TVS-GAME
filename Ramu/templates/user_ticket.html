@@ -3,43 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Live Housie - 6 Tickets</title>
+    <title>Housie Ticket - Live Game</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        :root { 
-            --primary: #ff4757; 
-            --admin-call: #fff200; 
-            --user-blue: #3498db; 
-        }
-        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #1e272e; margin: 0; padding: 0; color: white; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 0; }
         
-        .sticky-header { position: fixed; top: 0; width: 100%; background: #2d3436; z-index: 1000; border-bottom: 4px solid var(--primary); }
-        .header-content { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; max-width: 1000px; margin: 0 auto; }
-        .h-dot { display: inline-block; background: var(--primary); color: white; width: 30px; height: 30px; border-radius: 50%; line-height: 30px; margin: 2px; font-weight: bold; font-size: 13px; }
-
-        .ticket-container { margin-top: 140px; padding: 15px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .ticket-wrapper { background: white; padding: 10px; border-radius: 12px; max-width: 500px; width: 95%; box-shadow: 0 10px 30px rgba(0,0,0,0.4); border-top: 6px solid var(--primary); }
-
-        table { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
-        td { 
-            height: 45px; border-radius: 4px; font-weight: bold; font-size: 18px; 
-            position: relative; cursor: pointer; user-select: none;
-            background: #f1f2f6; color: #2d3436; 
+        /* 📌 STICKY HEADER */
+        .sticky-header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: white;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-bottom: 5px solid #ff4757;
         }
 
-        .is-called { background-color: var(--admin-call) !important; }
-        .marked-blue { background-color: var(--user-blue) !important; color: white !important; }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .recent-box { flex: 1; text-align: center; }
         
-        .marked-heart::after {
-            content: '❤️'; position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); font-size: 24px; opacity: 0.8;
+        /* 🎙️ MIC CONTROLS AREA */
+        .audio-controls { 
+            display: flex; 
+            gap: 8px; 
+            justify-content: flex-end; 
+            align-items: center;
         }
 
-        .empty { background: #dfe4ea !important; }
+        .btn-audio {
+            background: #6c5ce7;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.3s;
+            white-space: nowrap;
+        }
 
-        @media (max-width: 450px) {
+        .h-dot { 
+            display: inline-block; 
+            background: #ff4757; 
+            color: white; 
+            width: 30px; 
+            height: 30px; 
+            border-radius: 50%; 
+            line-height: 30px; 
+            margin: 2px; 
+            font-weight: bold; 
+            font-size: 14px;
+        }
+
+        /* 🎟️ TICKET SECTION */
+        .ticket-container { margin-top: 140px; padding: 15px; }
+        .ticket-wrapper { 
+            background: #fff; 
+            margin: 15px auto; 
+            max-width: 480px; 
+            padding: 15px; 
+            border-radius: 12px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
+        }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { border: 1px solid #ddd; height: 50px; font-weight: bold; font-size: 18px; position: relative; cursor: pointer; user-select: none; }
+        
+        /* ✨ AUTO-HIGHLIGHT STYLE ✨ */
+        .auto-match { 
+            background-color: #fff9c4 !important; /* Light Yellow */
+            color: #d32f2f !important;           /* Dark Red text */
+            box-shadow: inset 0 0 0 2px #fbc02d; /* Yellow border effect */
+        }
+
+        /* ❤️ MARKED STYLE */
+        .marked { background: #0984e3 !important; color: white !important; }
+        .marked::after {
+            content: '❤️';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 22px; opacity: 0.9;
+        }
+
+        .empty { background: #2d3436; color: #636e72; font-size: 14px; cursor: default; }
+
+        /* Responsive Fix for Mic */
+        @media (max-width: 400px) {
+            .header-content { flex-direction: column; gap: 10px; }
+            .audio-controls { width: 100%; justify-content: center; }
             .ticket-container { margin-top: 180px; }
-            td { height: 38px; font-size: 16px; }
         }
     </style>
 </head>
@@ -47,103 +109,122 @@
 
     <div class="sticky-header">
         <div class="header-content">
-            <div id="live-h"></div>
-            <button id="voice-toggle" class="h-dot" style="width:auto; border-radius:20px; padding:0 15px;" onclick="toggleUserAudio()">🎙️ Join</button>
-            <audio id="remote-audio" autoplay></audio>
+            <div class="recent-box">
+                <p style="margin: 0 0 5px 0; font-size: 13px; color: #666; font-weight: bold;">Recent Numbers:</p>
+                <div id="live-h"></div>
+            </div>
+
+            <div class="audio-controls">
+                <button id="voice-toggle" class="btn-audio" onclick="toggleUserAudio()">🎙️ Join Voice</button>
+                <button id="mute-btn" class="btn-audio" onclick="toggleMute()" style="display:none; background:#ff4757;">🔇 Mute</button>
+                <audio id="remote-audio" autoplay></audio>
+            </div>
         </div>
     </div>
 
-    <div id="main-ticket-area" class="ticket-container"></div>
+    <div class="ticket-container">
+        {% for ticket in tickets %}
+        <div class="ticket-wrapper">
+            <h3 style="margin-top: 0; font-size: 16px;">Ticket #{{ loop.index }}</h3>
+            <table>
+                {% for row in ticket %}
+                <tr>
+                    {% for val in row %}
+                        {% if val != 0 %}
+                            <td class="num-cell" data-value="{{ val }}" ondblclick="toggleMark(this)">
+                                {{ val }}
+                            </td>
+                        {% else %}
+                            <td class="empty">RV</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endfor %}
+    </div>
 
     <script>
-        let adminCalledNumbers = [];
-        let tapCount = 0;
-        let tapTimer;
+        let userPeer, isConnected = false;
+        const ADMIN_VOICE_ID = "{{ voice_id }}"; 
 
-        // --- 🎲 హౌసీ స్టాండర్డ్ టిక్కెట్ జనరేటర్ ---
-        function generateHousieTickets() {
-            let allNumbers = Array.from({length: 90}, (_, i) => i + 1);
-            allNumbers.sort(() => Math.random() - 0.5);
+        // --- 🎤 ఆడియో లాజిక్ ---
+        function toggleUserAudio() {
+            const btn = document.getElementById('voice-toggle');
+            const muteBtn = document.getElementById('mute-btn');
+            const audioBox = document.getElementById('remote-audio');
 
-            const container = document.getElementById('main-ticket-area');
-            container.innerHTML = '';
-
-            for (let t = 0; t < 6; t++) {
-                let ticketNums = allNumbers.slice(t * 15, (t + 1) * 15);
-                let grid = Array(3).fill().map(() => Array(9).fill(0));
-                
-                // నంబర్లను సరైన కాలమ్స్‌లో ఉంచడం
-                ticketNums.forEach(n => {
-                    let col = n === 90 ? 8 : Math.floor(n / 10);
-                    let row = Math.floor(Math.random() * 3);
-                    while(grid[row][col] !== 0) row = (row + 1) % 3;
-                    grid[row][col] = n;
-                });
-
-                let wrapper = document.createElement('div');
-                wrapper.className = 'ticket-wrapper';
-                wrapper.innerHTML = `<h3 style="color:#2d3436; margin:5px; font-size:14px;">Ticket #${t+1}</h3>`;
-
-                let table = document.createElement('table');
-                grid.forEach(row => {
-                    let tr = document.createElement('tr');
-                    row.forEach(val => {
-                        let td = document.createElement('td');
-                        if (val !== 0) {
-                            td.innerText = val;
-                            td.setAttribute('data-num', val);
-                            td.onclick = function() { handleTap(this); };
-                        } else {
-                            td.className = 'empty';
-                        }
-                        tr.appendChild(td);
+            if (!isConnected) {
+                userPeer = new Peer();
+                userPeer.on('open', () => {
+                    const call = userPeer.call(ADMIN_VOICE_ID, null);
+                    call.on('stream', stream => {
+                        audioBox.srcObject = stream;
+                        btn.innerText = "🛑 Leave";
+                        btn.style.background = "#2d3436";
+                        muteBtn.style.display = "inline-block";
+                        isConnected = true;
                     });
-                    table.appendChild(tr);
                 });
-                wrapper.appendChild(table);
-                container.appendChild(wrapper);
-            }
-        }
-
-        function handleTap(element) {
-            const num = parseInt(element.getAttribute('data-num'));
-            tapCount++;
-            if (tapCount === 1) {
-                tapTimer = setTimeout(() => {
-                    if (adminCalledNumbers.includes(num)) {
-                        element.classList.toggle('marked-heart');
-                    } else {
-                        element.classList.toggle('marked-blue');
-                    }
-                    tapCount = 0;
-                }, 250);
+                userPeer.on('error', err => {
+                    alert("Admin మైక్ ఆన్ లో లేదు. దయచేసి వేచి ఉండండి.");
+                    console.error(err);
+                });
             } else {
-                clearTimeout(tapTimer);
-                element.classList.toggle('marked-heart');
-                tapCount = 0;
+                if (userPeer) userPeer.destroy();
+                isConnected = false;
+                btn.innerText = "🎙️ Join Voice";
+                btn.style.background = "#6c5ce7";
+                muteBtn.style.display = "none";
+                audioBox.srcObject = null;
             }
         }
 
+        function toggleMute() {
+            const audio = document.getElementById('remote-audio');
+            const mBtn = document.getElementById('mute-btn');
+            audio.muted = !audio.muted;
+            mBtn.innerText = audio.muted ? "🔊 Unmute" : "🔇 Mute";
+            mBtn.style.background = audio.muted ? "#2ed573" : "#ff4757";
+        }
+
+        // --- ❤️ డబుల్ క్లిక్ మార్కింగ్ ---
+        function toggleMark(element) {
+            element.classList.toggle('marked');
+            if(element.classList.contains('marked')) {
+                element.classList.remove('auto-match'); 
+            }
+        }
+
+        // --- 🎲 AUTO-MATCH HIGHLIGHT LOGIC ---
         function fetchUpdates() {
             fetch('/get_updates').then(res => res.json()).then(data => {
                 if(data.called) {
-                    adminCalledNumbers = data.called;
+                    // 1. హిస్టరీ అప్‌డేట్ (గరిష్టంగా 8 నంబర్లు)
                     let html = "";
                     data.called.slice().reverse().slice(0, 8).forEach(n => {
                         html += `<span class="h-dot">${n}</span>`;
                     });
                     document.getElementById('live-h').innerHTML = html;
 
-                    document.querySelectorAll('td[data-num]').forEach(td => {
-                        if (adminCalledNumbers.includes(parseInt(td.getAttribute('data-num')))) {
-                            td.classList.add('is-called');
+                    // 2. ✨ ఆటో-హైలైట్ మెకానిజం ✨
+                    const calledNumbers = data.called;
+                    document.querySelectorAll('.num-cell').forEach(cell => {
+                        let cellValue = parseInt(cell.getAttribute('data-value'));
+                        
+                        if (calledNumbers.includes(cellValue)) {
+                            // ఒకవేళ యూజర్ ఇంకా మాన్యువల్ గా మార్క్ చేయకపోతేనే హైలైట్ అవుతుంది
+                            if (!cell.classList.contains('marked')) {
+                                cell.classList.add('auto-match');
+                            }
                         }
                     });
                 }
             });
         }
 
-        generateHousieTickets();
+        // ప్రతి 3 సెకన్లకు చెక్ చేస్తుంది
         setInterval(fetchUpdates, 3000);
     </script>
 </body>
