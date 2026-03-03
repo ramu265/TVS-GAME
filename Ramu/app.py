@@ -142,7 +142,6 @@ def show_ticket(token):
     if not user_data: return "<h1>Ticket Not Found!</h1>"
     return render_template('user_ticket.html', tickets=user_data['tickets'], voice_id=game_state["voice_room_id"])
 if __name__ == '__main__':
-    # లోకల్ హోస్ట్ (127.0.0.1) కాకుండా 0.0.0.0 వాడాలి
     # పోర్ట్ నంబర్ సర్వర్ ఇచ్చే దాని ప్రకారం ఉండాలి
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
