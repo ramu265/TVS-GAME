@@ -3,69 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tambola Ticket</title>
+    <title>Premium Live Tambola</title>
     <style>
         :root { 
             --primary: #ff4757; 
-            --admin-call: #fff200; /* Yellow for Admin */
-            --user-blue: #3498db;  /* Blue for Extra numbers */
-            --heart-color: #ff4757; 
+            --admin-call: #fff200; 
+            --user-blue: #3498db;  
+            --glass: rgba(255, 255, 255, 0.2);
         }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f2f6; margin: 0; padding: 10px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #2f3542; margin: 0; padding: 10px; color: white; }
         
-        .header { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .last-num { font-size: 50px; color: var(--primary); font-weight: bold; transition: transform 0.3s ease-in-out; }
-        .pulse { transform: scale(1.1); }
-
+        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 15px; border-radius: 20px; border: 1px solid var(--glass); margin-bottom: 20px; }
+        .last-num { font-size: 60px; color: var(--admin-call); font-weight: bold; text-shadow: 0 0 20px rgba(255, 242, 0, 0.5); }
+        
         .ticket-container { display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .ticket { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); }
+        .ticket { background: white; padding: 10px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-top: 5px solid var(--primary); }
         
-        table { border-collapse: collapse; margin: 5px auto; }
+        table { border-collapse: separate; border-spacing: 4px; }
         td { 
-            width: 48px; height: 48px; border: 1px solid #ddd; text-align: center; 
-            font-weight: bold; font-size: 19px; cursor: pointer; position: relative; 
-            transition: all 0.3s ease; background: white; 
+            width: 45px; height: 45px; border-radius: 8px; text-align: center; 
+            font-weight: bold; font-size: 20px; cursor: pointer; position: relative; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: #f1f2f6; color: #2f3542;
         }
-        td.empty { background: #f9f9f9; cursor: default; }
+        td.empty { background: #dfe4ea; cursor: default; }
 
-        /* --- ✨ Marking Effects --- */
+        /* --- ✨ Premium Marking Effects --- */
         
-        /* 1. Admin Called: Auto Yellow */
+        /* Admin Called: Glowing Yellow */
         .is-called { 
-            background-color: var(--admin-call) !important; 
-            border: 2px solid #f1c40f !important;
-            animation: highlight 0.5s ease;
+            background: var(--admin-call) !important; 
+            transform: scale(0.95);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
 
-        /* 2. User Manual Click: Heart Symbol */
+        /* User Blue: Glass Style */
+        .marked-blue { 
+            background: var(--user-blue) !important; 
+            color: white !important;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+        }
+
+        /* Heart Animation: Effective & Floating */
         .marked-heart::after { 
             content: '❤️'; position: absolute; top: 50%; left: 50%; 
-            transform: translate(-50%, -50%); font-size: 26px; 
-            pointer-events: none; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translate(-50%, -50%); font-size: 30px; 
+            pointer-events: none;
+            filter: drop-shadow(0 0 5px rgba(255, 71, 87, 0.8));
+            animation: heartBeat 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* 3. Not Called but Clicked: Blue Mark */
-        .marked-blue { 
-            background-color: var(--user-blue) !important; 
-            color: white !important;
-            border-radius: 5px;
-        }
-
-        @keyframes highlight {
-            0% { transform: scale(1.2); background-color: #fffa65; }
-            100% { transform: scale(1); background-color: var(--admin-call); }
-        }
-
-        @keyframes pop {
+        @keyframes heartBeat {
             0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.4); }
             100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .pulse { animation: pulseAnim 0.5s ease-in-out; }
+        @keyframes pulseAnim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #ff4757; }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="font-size: 14px; color: #666; font-weight: bold;">LIVE CALL</div>
+        <div style="font-size: 14px; color: #ccc; letter-spacing: 2px;">LIVE NUMBER</div>
         <div id="current-number" class="last-num">--</div>
     </div>
 
@@ -96,36 +100,28 @@
         let tapTimer;
         let adminCalledNumbers = [];
 
-        // --- 👆 Marking Logic (Double Click) ---
         function handleTap(element) {
             const num = parseInt(element.getAttribute('data-num'));
             tapCount++;
 
             if (tapCount === 1) {
                 tapTimer = setTimeout(() => {
-                    // Single Click Logic
-                    applyMarking(element, num);
+                    // Single Click: Heart on admin called, else Blue
+                    if (adminCalledNumbers.includes(num)) {
+                        element.classList.toggle('marked-heart');
+                    } else {
+                        element.classList.toggle('marked-blue');
+                    }
                     tapCount = 0;
-                }, 300);
+                }, 250);
             } else if (tapCount === 2) {
                 clearTimeout(tapTimer);
-                // Double Click: Toggle Heart regardless of other marks
+                // Double Click: Always Toggle Heart
                 element.classList.toggle('marked-heart');
                 tapCount = 0;
             }
         }
 
-        function applyMarking(element, num) {
-            if (adminCalledNumbers.includes(num)) {
-                // Admin already called: It's yellow, user can toggle heart on top
-                element.classList.toggle('marked-heart');
-            } else {
-                // Admin hasn't called: Mark Blue
-                element.classList.toggle('marked-blue');
-            }
-        }
-
-        // --- 🔄 Auto Update Logic ---
         function updateGame() {
             fetch('/get_updates')
             .then(res => res.json())
@@ -133,9 +129,8 @@
                 if (data.called && data.called.length > 0) {
                     const newCalled = data.called;
                     const lastNum = newCalled[newCalled.length - 1];
-                    
-                    // Update Header if new number arrives
                     const display = document.getElementById('current-number');
+
                     if (display.innerText != lastNum) {
                         display.innerText = lastNum;
                         display.classList.add('pulse');
@@ -144,19 +139,17 @@
 
                     adminCalledNumbers = newCalled;
 
-                    // Auto-mark Yellow for all admin called numbers
                     document.querySelectorAll('td[data-num]').forEach(td => {
                         const n = parseInt(td.getAttribute('data-num'));
                         if (adminCalledNumbers.includes(n)) {
                             td.classList.add('is-called');
-                            td.classList.remove('marked-blue'); // Remove blue if it's now called
+                            td.classList.remove('marked-blue'); 
                         }
                     });
                 }
             });
         }
 
-        // 3 సెకన్లకు ఒకసారి సర్వర్ నుండి అప్‌డేట్స్ తెస్తుంది
         setInterval(updateGame, 3000);
         updateGame();
     </script>
