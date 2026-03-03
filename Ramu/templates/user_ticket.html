@@ -3,31 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Tambola Tickets</title>
+    <title>Live Tambola Ticket</title>
     <style>
-        :root { --primary: #ff4757; --secondary: #2f3542; }
+        :root { --primary: #ff4757; --green: #2ecc71; --blue: #3498db; --yellow: #fff200; }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f2f6; margin: 0; padding: 10px; text-align: center; }
-        .header { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .last-num { font-size: 40px; color: var(--primary); font-weight: bold; }
         
-        .ticket-container { display: flex; flex-direction: column; gap: 20px; align-items: center; }
-        .ticket { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); }
+        .header { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; }
+        .last-num { font-size: 50px; color: var(--primary); font-weight: bold; line-height: 1; }
+        
+        .ticket-container { display: flex; flex-direction: column; gap: 20px; align-items: center; padding-bottom: 50px; }
+        .ticket { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); max-width: 100%; overflow-x: auto; }
         
         table { border-collapse: collapse; margin: 5px auto; }
         td { width: 45px; height: 45px; border: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 18px; cursor: pointer; position: relative; transition: 0.2s; background: white; }
         td.empty { background: #f9f9f9; cursor: default; }
         
         /* --- Marking Styles --- */
-        .marked-heart::after { content: '❤️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; pointer-events: none; }
-        .marked-yellow { background-color: #fff200 !important; color: black; }
-        .is-called { border: 2px solid #2ecc71 !important; }
+        /* అడ్మిన్ కాల్ చేస్తే ఆటోమేటిక్ ఎల్లో మార్క్ */
+        .auto-yellow { background-color: var(--yellow) !important; color: black; }
+        
+        /* యూజర్ క్లిక్ చేస్తే హార్ట్ సింబల్ */
+        .user-heart::after { content: '❤️'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; pointer-events: none; z-index: 2; }
+        
+        /* అడ్మిన్ చెప్పని నంబర్ క్లిక్ చేస్తే బ్లూ మార్క్ */
+        .wrong-blue { background-color: var(--blue) !important; color: white; }
+        
+        /* కాల్ చేసిన నంబర్ కు గ్రీన్ బార్డర్ */
+        .is-called { border: 3px solid var(--green) !important; z-index: 1; }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <div style="font-size: 14px; color: #666;">Last Called Number</div>
+        <div style="font-size: 14px; color: #666; font-weight: bold;">LAST NUMBER</div>
         <div id="current-number" class="last-num">--</div>
+        <div id="voice-msg" style="font-size: 12px; color: #999; margin-top: 5px;">Voice Enabled 🔊</div>
     </div>
 
     <div id="main-ticket-area" class="ticket-container">
@@ -38,7 +48,7 @@
                 <tr>
                     {% for num in row %}
                         {% if num != 0 %}
-                            <td onclick="handleTap(this)" data-num="{{ num }}">
+                            <td onclick="handleUserClick(this)" data-num="{{ num }}">
                                 {{ num }}
                             </td>
                         {% else %}
@@ -53,46 +63,69 @@
     </div>
 
     <script>
-        let tapCount = 0;
-        let tapTimer;
+        let calledNumbers = [];
+        let lastAnnounced = null;
 
-        // --- 👆 Marking Logic ---
-        function handleTap(element) {
-            tapCount++;
-            if (tapCount === 1) {
-                tapTimer = setTimeout(() => {
-                    // Single Click: Pink Heart ❤️
-                    element.classList.toggle('marked-heart');
-                    tapCount = 0;
-                }, 300);
-            } else if (tapCount === 2) {
-                clearTimeout(tapTimer);
-                // Double Click: Yellow Mark 🟨
-                element.classList.remove('marked-heart');
-                element.classList.toggle('marked-yellow');
-                tapCount = 0;
+        // --- 🗣️ Voice Function ---
+        function speakNumber(num) {
+            if ('speechSynthesis' in window) {
+                const msg = new SpeechSynthesisUtterance();
+                msg.text = "Number " + num;
+                msg.rate = 0.9; // స్లోగా చెప్పడానికి
+                window.speechSynthesis.speak(msg);
             }
         }
 
-        // --- 🔄 Auto Update Called Numbers ---
+        // --- 👆 User Click Logic ---
+        function handleUserClick(element) {
+            const num = parseInt(element.getAttribute('data-num'));
+            
+            // 1. అడ్మిన్ చెప్పిన నంబర్ అయితే - Heart Symbol వస్తుంది
+            if (calledNumbers.includes(num)) {
+                element.classList.toggle('user-heart');
+            } 
+            // 2. అడ్మిన్ చెప్పని నంబర్ అయితే - Blue Mark వస్తుంది
+            else {
+                element.classList.toggle('wrong-blue');
+            }
+        }
+
+        // --- 🔄 Auto Sync with Admin ---
         function updateGame() {
             fetch('/get_updates')
             .then(res => res.json())
             .then(data => {
-                if (data.called.length > 0) {
-                    const lastNum = data.called[data.called.length - 1];
-                    document.getElementById('current-number').innerText = lastNum;
+                calledNumbers = data.called;
+                
+                if (calledNumbers.length > 0) {
+                    const latest = calledNumbers[calledNumbers.length - 1];
                     
-                    // కాల్ చేసిన నంబర్ ని గ్రీన్ కలర్ తో చూపిస్తుంది
+                    // కొత్త నంబర్ వస్తే వాయిస్ వినిపిస్తుంది
+                    if (latest !== lastAnnounced) {
+                        document.getElementById('current-number').innerText = latest;
+                        speakNumber(latest);
+                        lastAnnounced = latest;
+                    }
+
+                    // టికెట్ లో నంబర్లను అప్‌డేట్ చేయడం
                     document.querySelectorAll('td[data-num]').forEach(td => {
-                        if (parseInt(td.getAttribute('data-num')) === lastNum) {
-                            td.classList.add('is-called');
+                        const n = parseInt(td.getAttribute('data-num'));
+                        
+                        if (calledNumbers.includes(n)) {
+                            // ఆటోమేటిక్ ఎల్లో మార్క్ మరియు గ్రీన్ బార్డర్
+                            td.classList.add('auto-yellow');
+                            if (n === latest) {
+                                td.classList.add('is-called');
+                            } else {
+                                td.classList.remove('is-called');
+                            }
                         }
                     });
                 }
             });
         }
 
+        // ప్రతి 3 సెకన్లకు ఒకసారి అడ్మిన్ దగ్గర నుండి డేటా తీసుకుంటుంది
         setInterval(updateGame, 3000);
         updateGame();
     </script>
