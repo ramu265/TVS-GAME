@@ -3,57 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TVS Housie - Live Game</title>
+    <title>Premium Housie - Live Game</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root {
             --admin-yellow: #fff200;
             --user-pink: #ff4757;
             --wrong-blue: #3498db;
-            --bg-dark: #f0f2f5;
+            --bg-light: #f4f7f6;
+            --cell-border: #bdc3c7;
         }
-        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: var(--bg-dark); margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: var(--bg-light); margin: 0; padding: 0; }
         
         /* 📌 STICKY HEADER */
         .sticky-header {
             position: fixed; top: 0; width: 100%; background: white;
-            z-index: 1000; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            border-bottom: 5px solid var(--user-pink);
+            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-bottom: 4px solid var(--user-pink);
         }
 
         .header-content {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 15px; max-width: 1000px; margin: 0 auto;
+            padding: 8px 15px; max-width: 1000px; margin: 0 auto;
         }
 
         .h-dot { 
             display: inline-block; background: var(--user-pink); color: white; 
-            width: 30px; height: 30px; border-radius: 50%; line-height: 30px; 
-            margin: 2px; font-weight: bold; font-size: 14px;
+            width: 28px; height: 28px; border-radius: 50%; line-height: 28px; 
+            margin: 2px; font-weight: bold; font-size: 13px;
         }
 
         /* 🎙️ AUDIO CONTROLS */
         .btn-audio {
             background: #6c5ce7; color: white; border: none;
-            padding: 8px 12px; border-radius: 20px; font-weight: bold;
-            cursor: pointer; font-size: 12px; transition: 0.3s;
+            padding: 6px 12px; border-radius: 15px; font-weight: bold;
+            cursor: pointer; font-size: 11px;
         }
 
         /* 🎟️ TICKET SECTION */
-        .ticket-container { margin-top: 140px; padding: 15px; }
+        .ticket-container { margin-top: 130px; padding: 15px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        
         .ticket-wrapper { 
-            background: #fff; margin: 15px auto; max-width: 480px; 
-            padding: 15px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
+            background: #fff; width: 340px; 
+            padding: 10px; border-radius: 8px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
         }
 
-        table { width: 100%; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+        .ticket-id { font-size: 11px; color: #7f8c8d; text-align: left; margin-bottom: 4px; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #fff; }
+        
         td { 
-            border: 1px solid #ddd; height: 50px; font-weight: bold; font-size: 20px; 
-            position: relative; cursor: pointer; user-select: none; border-radius: 6px;
-            background: #f8f9fa; transition: 0.2s;
+            border: 1px solid var(--cell-border); height: 42px; 
+            font-weight: bold; font-size: 20px; 
+            position: relative; cursor: pointer; user-select: none;
+            color: #2c3e50; transition: background 0.2s;
         }
         
-        .empty { background: #2d3436; color: #636e72; font-size: 12px; cursor: default; border: none; }
+        /* ఖాళీ గడులు - ఏ టెక్స్ట్ ఉండదు */
+        .empty { background: #ecf0f1; border: 1px solid #dcdde1; cursor: default; }
 
         /* ✨ 1. AUTO-YELLOW (Admin Announced) ✨ */
         .auto-yellow { background-color: var(--admin-yellow) !important; color: #000 !important; }
@@ -61,19 +70,19 @@
         /* 💗 2. PINK + HEART (User Correct Double Click) 💗 */
         .marked-correct { background-color: var(--user-pink) !important; color: white !important; }
         .marked-correct::after {
-            content: '❤️'; position: absolute; top: 2px; right: 2px;
-            font-size: 14px;
+            content: '❤️'; position: absolute; top: 1px; right: 1px;
+            font-size: 12px;
         }
 
-        /* 🔵 3. BLUE/RED (User Wrong Double Click) 🔵 */
+        /* 🔵 3. BLUE (User Wrong Double Click) 🔵 */
         .marked-wrong { 
             background-color: var(--wrong-blue) !important; color: white !important; 
-            border: 2px solid #c0392b !important; 
         }
 
         @media (max-width: 400px) {
-            .header-content { flex-direction: column; gap: 10px; }
-            .ticket-container { margin-top: 180px; }
+            .header-content { flex-direction: column; gap: 8px; }
+            .ticket-container { margin-top: 160px; }
+            .ticket-wrapper { width: 92%; }
         }
     </style>
 </head>
@@ -82,7 +91,7 @@
     <div class="sticky-header">
         <div class="header-content">
             <div class="recent-box">
-                <p style="margin: 0 0 5px 0; font-size: 13px; color: #666; font-weight: bold;">Recent Numbers:</p>
+                <p style="margin: 0 0 4px 0; font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;">Recent Numbers</p>
                 <div id="live-h"></div>
             </div>
 
@@ -96,7 +105,7 @@
     <div class="ticket-container">
         {% for ticket in tickets %}
         <div class="ticket-wrapper">
-            <h3 style="margin-top: 0; font-size: 16px; color: #2d3436;">Ticket #{{ loop.index }}</h3>
+            <div class="ticket-id">TICKET #{{ loop.index }}</div>
             <table>
                 {% for row in ticket %}
                 <tr>
@@ -106,7 +115,7 @@
                                 {{ val }}
                             </td>
                         {% else %}
-                            <td class="empty">TVS</td>
+                            <td class="empty"></td>
                         {% endif %}
                     {% endfor %}
                 </tr>
@@ -136,6 +145,9 @@
                         btn.style.background = "#2d3436";
                     });
                 });
+                userPeer.on('error', err => {
+                    alert("Admin మైక్ ఆన్ లో లేదు.");
+                });
             } else {
                 if (userPeer) userPeer.destroy();
                 btn.innerText = "🎙️ Join Voice";
@@ -144,38 +156,37 @@
             }
         }
 
-        // --- 👆 డబుల్ క్లిక్ లాజిక్ (Correct vs Wrong) ---
+        // --- 👆 డబుల్ క్లిక్ లాజిక్ ---
         function handleUserMark(element) {
             let val = parseInt(element.getAttribute('data-value'));
 
             if (adminCalledNumbers.includes(val)) {
-                // సరైన నంబర్ అయితే -> Pink + Heart
+                // సరైన నంబర్ -> Pink + Heart
                 element.classList.remove('auto-yellow');
                 element.classList.toggle('marked-correct');
             } else {
-                // తప్పు నంబర్ అయితే -> Blue
+                // తప్పు నంబర్ -> Blue
                 element.classList.toggle('marked-wrong');
             }
         }
 
-        // --- 🔄 ఆటోమేటిక్ అప్‌డేట్స్ ---
+        // --- 🔄 ఆటోమేటిక్ సింక్ ---
         function fetchUpdates() {
             fetch('/get_updates').then(res => res.json()).then(data => {
                 if(data.called) {
                     adminCalledNumbers = data.called;
 
-                    // 1. టాప్ బార్ లో రీసెంట్ నంబర్లు
+                    // రీసెంట్ నంబర్ల అప్‌డేట్
                     let html = "";
                     adminCalledNumbers.slice().reverse().slice(0, 8).forEach(n => {
                         html += `<span class="h-dot">${n}</span>`;
                     });
                     document.getElementById('live-h').innerHTML = html;
 
-                    // 2. ✨ ఆటోమేటిక్ ఎల్లో మార్కింగ్ ✨
+                    // ✨ ఆటోమేటిక్ ఎల్లో హైలైట్ ✨
                     document.querySelectorAll('.num-cell').forEach(cell => {
                         let cellVal = parseInt(cell.getAttribute('data-value'));
                         if (adminCalledNumbers.includes(cellVal)) {
-                            // యూజర్ ఇంకా మార్క్ చేయకపోతేనే Yellow చూపిస్తుంది
                             if (!cell.classList.contains('marked-correct')) {
                                 cell.classList.add('auto-yellow');
                             }
