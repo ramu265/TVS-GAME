@@ -3,140 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Housie Ticket - Live Game</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <title>TVS Housie - Live Game</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; text-align: center; background: #f0f2f5; margin: 0; padding: 0; }
+        :root {
+            --admin-yellow: #fff200;
+            --user-pink: #ff4757;
+            --wrong-blue: #3498db;
+            --bg-dark: #1e272e;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: white; text-align: center; margin: 0; padding: 10px; }
         
-        /* 📌 STICKY HEADER */
-        .sticky-header {
-            position: fixed;
-            top: 0;
-            width: 100%;
-            background: white;
-            z-index: 1000;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            border-bottom: 5px solid #ff4757;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .recent-box { flex: 1; text-align: center; }
+        .header { background: #2d3436; padding: 15px; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--user-pink); }
         
-        /* 🎙️ MIC CONTROLS AREA */
-        .audio-controls { 
-            display: flex; 
-            gap: 8px; 
-            justify-content: flex-end; 
-            align-items: center;
-        }
-
-        .btn-audio {
-            background: #6c5ce7;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 12px;
-            transition: 0.3s;
-            white-space: nowrap;
-        }
-
-        .h-dot { 
-            display: inline-block; 
-            background: #ff4757; 
-            color: white; 
-            width: 30px; 
-            height: 30px; 
-            border-radius: 50%; 
-            line-height: 30px; 
-            margin: 2px; 
-            font-weight: bold; 
-            font-size: 14px;
-        }
-
-        /* 🎟️ TICKET SECTION */
-        .ticket-container { margin-top: 140px; padding: 15px; }
-        .ticket-wrapper { 
-            background: #fff; 
-            margin: 15px auto; 
-            max-width: 480px; 
-            padding: 15px; 
-            border-radius: 12px; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08); 
-        }
-
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        td { border: 1px solid #ddd; height: 50px; font-weight: bold; font-size: 18px; position: relative; cursor: pointer; user-select: none; }
+        .ticket-container { display: flex; flex-direction: column; gap: 25px; align-items: center; margin-top: 20px; }
         
-        /* ✨ AUTO-HIGHLIGHT STYLE ✨ */
-        .auto-match { 
-            background-color: #fff9c4 !important; /* Light Yellow */
-            color: #d32f2f !important;           /* Dark Red text */
-            box-shadow: inset 0 0 0 2px #fbc02d; /* Yellow border effect */
+        .ticket { background: white; border-radius: 8px; padding: 8px; width: 340px; box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        
+        table { width: 100%; border-collapse: separate; border-spacing: 4px; }
+        
+        td { 
+            width: 35px; height: 40px; border-radius: 5px; border: 1px solid #ccc; 
+            text-align: center; font-weight: bold; font-size: 19px; color: #2d3436;
+            cursor: pointer; position: relative; transition: 0.3s; background: #f1f2f6;
         }
 
-        /* ❤️ MARKED STYLE */
-        .marked { background: #0984e3 !important; color: white !important; }
-        .marked::after {
-            content: '❤️';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 22px; opacity: 0.9;
+        .empty { background-color: #dfe4ea; border: none; cursor: default; }
+
+        /* 🟡 Admin Announced (Automatic) */
+        .is-called-by-admin { background-color: var(--admin-yellow) !important; animation: highlight 1s infinite alternate; }
+
+        /* 💗 User Clicked Correct (Pink + Heart) */
+        .user-correct { background-color: var(--user-pink) !important; color: white !important; }
+        .user-correct::before {
+            content: '❤️'; position: absolute; top: -2px; right: -2px; font-size: 12px;
         }
 
-        .empty { background: #2d3436; color: #636e72; font-size: 14px; cursor: default; }
+        /* 🔵 User Clicked Wrong (Blue/Red) */
+        .user-wrong { background-color: var(--wrong-blue) !important; color: white !important; border: 2px solid #c0392b; }
 
-        /* Responsive Fix for Mic */
-        @media (max-width: 400px) {
-            .header-content { flex-direction: column; gap: 10px; }
-            .audio-controls { width: 100%; justify-content: center; }
-            .ticket-container { margin-top: 180px; }
-        }
+        @keyframes highlight { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        .recent-numbers { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+        .num-dot { background: var(--user-pink); color: white; width: 30px; height: 30px; border-radius: 50%; line-height: 30px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="sticky-header">
-        <div class="header-content">
-            <div class="recent-box">
-                <p style="margin: 0 0 5px 0; font-size: 13px; color: #666; font-weight: bold;">Recent Numbers:</p>
-                <div id="live-h"></div>
-            </div>
-
-            <div class="audio-controls">
-                <button id="voice-toggle" class="btn-audio" onclick="toggleUserAudio()">🎙️ Join Voice</button>
-                <button id="mute-btn" class="btn-audio" onclick="toggleMute()" style="display:none; background:#ff4757;">🔇 Mute</button>
-                <audio id="remote-audio" autoplay></audio>
-            </div>
-        </div>
+    <div class="header">
+        <h3>TVS Premium Housie</h3>
+        <div id="live-status">Recent Numbers:</div>
+        <div class="recent-numbers" id="numbers-strip"></div>
     </div>
 
     <div class="ticket-container">
         {% for ticket in tickets %}
-        <div class="ticket-wrapper">
-            <h3 style="margin-top: 0; font-size: 16px;">Ticket #{{ loop.index }}</h3>
+        <div class="ticket">
+            <div style="color: #666; font-size: 11px; text-align: left; margin-bottom: 5px;">TICKET #{{ loop.index }}</div>
             <table>
                 {% for row in ticket %}
                 <tr>
-                    {% for val in row %}
-                        {% if val != 0 %}
-                            <td class="num-cell" data-value="{{ val }}" ondblclick="toggleMark(this)">
-                                {{ val }}
-                            </td>
-                        {% else %}
-                            <td class="empty">RV</td>
-                        {% endif %}
+                    {% for cell in row %}
+                    <td class="{% if cell == 0 %}empty{% endif %}" 
+                        data-number="{{ cell }}" 
+                        ondblclick="handleUserMark(this)">
+                        {% if cell != 0 %}{{ cell }}{% endif %}
+                    </td>
                     {% endfor %}
                 </tr>
                 {% endfor %}
@@ -146,86 +77,50 @@
     </div>
 
     <script>
-        let userPeer, isConnected = false;
-        const ADMIN_VOICE_ID = "{{ voice_id }}"; 
+        let adminCalledNumbers = [];
 
-        // --- 🎤 ఆడియో లాజిక్ ---
-        function toggleUserAudio() {
-            const btn = document.getElementById('voice-toggle');
-            const muteBtn = document.getElementById('mute-btn');
-            const audioBox = document.getElementById('remote-audio');
-
-            if (!isConnected) {
-                userPeer = new Peer();
-                userPeer.on('open', () => {
-                    const call = userPeer.call(ADMIN_VOICE_ID, null);
-                    call.on('stream', stream => {
-                        audioBox.srcObject = stream;
-                        btn.innerText = "🛑 Leave";
-                        btn.style.background = "#2d3436";
-                        muteBtn.style.display = "inline-block";
-                        isConnected = true;
-                    });
-                });
-                userPeer.on('error', err => {
-                    alert("Admin మైక్ ఆన్ లో లేదు. దయచేసి వేచి ఉండండి.");
-                    console.error(err);
-                });
-            } else {
-                if (userPeer) userPeer.destroy();
-                isConnected = false;
-                btn.innerText = "🎙️ Join Voice";
-                btn.style.background = "#6c5ce7";
-                muteBtn.style.display = "none";
-                audioBox.srcObject = null;
-            }
-        }
-
-        function toggleMute() {
-            const audio = document.getElementById('remote-audio');
-            const mBtn = document.getElementById('mute-btn');
-            audio.muted = !audio.muted;
-            mBtn.innerText = audio.muted ? "🔊 Unmute" : "🔇 Mute";
-            mBtn.style.background = audio.muted ? "#2ed573" : "#ff4757";
-        }
-
-        // --- ❤️ డబుల్ క్లిక్ మార్కింగ్ ---
-        function toggleMark(element) {
-            element.classList.toggle('marked');
-            if(element.classList.contains('marked')) {
-                element.classList.remove('auto-match'); 
-            }
-        }
-
-        // --- 🎲 AUTO-MATCH HIGHLIGHT LOGIC ---
-        function fetchUpdates() {
+        // అడ్మిన్ చెప్పిన నంబర్ల అప్‌డేట్ కోసం
+        function fetchGameUpdates() {
             fetch('/get_updates').then(res => res.json()).then(data => {
-                if(data.called) {
-                    // 1. హిస్టరీ అప్‌డేట్ (గరిష్టంగా 8 నంబర్లు)
-                    let html = "";
-                    data.called.slice().reverse().slice(0, 8).forEach(n => {
-                        html += `<span class="h-dot">${n}</span>`;
-                    });
-                    document.getElementById('live-h').innerHTML = html;
+                adminCalledNumbers = data.called;
+                
+                // టాప్ స్ట్రిప్ అప్‌డేట్
+                let stripHtml = "";
+                adminCalledNumbers.slice(-5).reverse().forEach(n => {
+                    stripHtml += `<span class="num-dot">${n}</span>`;
+                });
+                document.getElementById('numbers-strip').innerHTML = stripHtml;
 
-                    // 2. ✨ ఆటో-హైలైట్ మెకానిజం ✨
-                    const calledNumbers = data.called;
-                    document.querySelectorAll('.num-cell').forEach(cell => {
-                        let cellValue = parseInt(cell.getAttribute('data-value'));
-                        
-                        if (calledNumbers.includes(cellValue)) {
-                            // ఒకవేళ యూజర్ ఇంకా మాన్యువల్ గా మార్క్ చేయకపోతేనే హైలైట్ అవుతుంది
-                            if (!cell.classList.contains('marked')) {
-                                cell.classList.add('auto-match');
-                            }
+                // టిక్కెట్ గడులను ఆటోమేటిక్ గా Yellow చేయడం
+                document.querySelectorAll('td').forEach(td => {
+                    let num = parseInt(td.getAttribute('data-number'));
+                    if (num > 0 && adminCalledNumbers.includes(num)) {
+                        // కేవలం యూజర్ మార్క్ చేయని వాటినే Yellow చేస్తుంది
+                        if (!td.classList.contains('user-correct')) {
+                            td.classList.add('is-called-by-admin');
                         }
-                    });
-                }
+                    }
+                });
             });
         }
 
-        // ప్రతి 3 సెకన్లకు చెక్ చేస్తుంది
-        setInterval(fetchUpdates, 3000);
+        // యూజర్ డబుల్ క్లిక్ చేసినప్పుడు
+        function handleUserMark(el) {
+            let num = parseInt(el.getAttribute('data-number'));
+            if (!num || num === 0) return;
+
+            if (adminCalledNumbers.includes(num)) {
+                // అడ్మిన్ చెప్పిన నంబర్ అయితే -> Pink + Heart
+                el.classList.remove('is-called-by-admin');
+                el.classList.toggle('user-correct');
+            } else {
+                // అడ్మిన్ చెప్పని నంబర్ అయితే -> Blue
+                el.classList.toggle('user-wrong');
+            }
+        }
+
+        // ప్రతి 3 సెకన్లకు ఒకసారి చెక్ చేస్తుంది
+        setInterval(fetchGameUpdates, 3000);
     </script>
 </body>
 </html>
